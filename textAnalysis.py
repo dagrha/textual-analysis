@@ -47,16 +47,19 @@ replace_all('shunned.csv', ')', '')
 
 df = pd.DataFrame.from_csv('shunned.csv')
 
-df.polarity.plot(figsize=(12,5), color='b', title='Sentiment Polarity for HP Lovecraft\'s The Shunned House')
+bookTitle = 'HP Lovecraft\'s The Shunned House'
+plt.figure()
+df.polarity.plot(figsize=(12,5), color='b', title='Sentiment Polarity for\n'+bookTitle)
 plt.xlabel('Sentence number')
 plt.ylabel('Sentiment polarity')
 
 df['cum_sum'] = df.polarity.cumsum()
 
+plt.figure()
 df.cum_sum.plot(figsize=(12,5), color='r', 
-                title='Sentiment Polarity cumulative summation for HP Lovecraft\'s The Shunned House')
+                title='Sentiment Polarity cumulative summation for\n'+bookTitle)
 plt.xlabel('Sentence number')
-plt.ylabel('Cumulative sum of sentiment polarity')
+plt.ylabel('Sum of Sentiment')
 
 df.head()
 
