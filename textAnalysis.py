@@ -10,7 +10,6 @@ import pandas as pd
 import pylab as plt
 import fileinput
 import sys
-# %matplotlib inline
 
 with open (r'lovecraft.txt', 'r') as myfile:
     shunned = myfile.read()
