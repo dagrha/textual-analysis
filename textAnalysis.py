@@ -12,11 +12,29 @@ import collections
 import re
 
 
-def readBook():
-    return
+def readBook(book_text):
+    with open (book_text, 'r') as book:
+        reader = book.read()
+    return unicode(reader, 'utf-8')
 
-def sentiment():
-    return
+
+def sentiment(textblob):
+    paragraph = textblob.sentences
+    i = -1
+    for sentence in paragraph:
+        i += 1
+        pol = sentence.sentiment.polarity
+        if i == 0:
+            write_type = 'w'
+            with open('shunned.csv', write_type) as text_file:
+                header = 'number,' + 'polarity,' + '\n'
+                text_file.write(str(header))
+        write_type = 'a'
+        with open('shunned.csv', write_type) as text_file:
+            newline = str(i) + ',' + str(pol) + '\n'
+            text_file.write(str(newline))
+        df = pd.DataFrame.from_csv('shunned.csv')
+        return df
 
 def graph(pandaFrame):
     book_title = 'HP Lovecraft\'s The Shunned House'
@@ -37,33 +55,8 @@ def graph(pandaFrame):
     return
 
 if __name__ == '__main__':
-    readBook()
-    sentiment()
-    
-    with open (r'lovecraft.txt', 'r') as myfile:
-        shunned = myfile.read()
-    
-    ushunned = unicode(shunned, 'utf-8')
-    
-    tb = TextBlob(ushunned)
-    
-    paragraph = tb.sentences[:-120:]
-    
-    i = -1
-    for sentence in paragraph:
-        i += 1
-        pol = sentence.sentiment.polarity
-        if i == 0:
-            write_type = 'w'
-            with open('shunned.csv', write_type) as text_file:
-                header = 'number,' + 'polarity,' + '\n'
-                text_file.write(str(header))
-        write_type = 'a'
-        with open('shunned.csv', write_type) as text_file:
-            newline = str(i) + ',' + str(pol) + '\n'
-            text_file.write(str(newline))
-    
-    df = pd.DataFrame.from_csv('shunned.csv')
+    tb = TextBlob(readBook('lovecraft.txt'))
+    sentiment(tb)
     
     graph(df)
     
