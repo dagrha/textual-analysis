@@ -18,7 +18,7 @@ ushunned = unicode(shunned, 'utf-8')
 
 tb = TextBlob(ushunned)
 
-paragraph = tb.sentences[:-120:]
+paragraph = tb.sentences
 
 i = -1
 for sentence in paragraph:
