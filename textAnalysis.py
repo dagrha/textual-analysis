@@ -9,6 +9,7 @@ from textblob import TextBlob
 import pandas as pd
 #import pylab as plt
 import bokeh.plotting as bk
+import bokeh.models as models
 import collections
 import re
 
@@ -62,19 +63,42 @@ def sentiment(textblob):
     
 def sentencePlot(pandaFrame):
     bk.output_file("test.html", title="Sentiment on Bokeh")
+    TOOLS = []
     
     p1 = bk.figure(title="Fig Title",
                    x_axis_label="Sentence Number",
-                   y_axis_label="Polarity")
-    p1.line(range(pandaFrame['polarity'].size),pandaFrame['polarity'])
+                   y_axis_label="Polarity",
+                   tools=TOOLS)
+    x=range(pandaFrame['polarity'].size)
+    y=pandaFrame['polarity']
+    p1.line(x,y)
+    
+    
+    # Add a circle, that is visible only when selected
+    source = models.ColumnDataSource({'x': x, 'y': y})
+    invisible_circle = models.Circle(x='x', y='y', fill_color='white',
+                                     fill_alpha=0.05, line_color=None, size=5)
+    visible_circle = models.Circle(x='x', y='y', fill_color='firebrick',
+                                   fill_alpha=0.5, line_color=None, size=5)
+    cr = p1.add_glyph(source, invisible_circle, selection_glyph=visible_circle,
+                      nonselection_glyph=invisible_circle)    
+    # Add a hover tool, that selects the circle
+    code = "source.set('selected', cb_data['index']);"
+    callback = models.Callback(args={'source': source}, code=code)
+    p1.add_tools(models.HoverTool(tooltips=None, callback=callback,
+                                  renderers=[cr], mode='hline'))
     return p1
 
 def sumPlot(pandaFrame):
     bk.output_file("test.html", title="Sentiment on Bokeh")
+    TOOLS = [models.HoverTool(tooltips=[
+                                ("Sentence","$index"),
+                                ("Sentiment","$y")])]
     
     p1 = bk.figure(title="Fig Title",
                    x_axis_label="Sentence Number",
-                   y_axis_label="Polarity")
+                   y_axis_label="Polarity",
+                   tools=TOOLS)
     p1.line(range(df.cumsum()['polarity'].size),df.cumsum()['polarity'])
     return p1
 
