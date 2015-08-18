@@ -11,53 +11,63 @@ import pylab as plt
 import collections
 import re
 
-with open (r'lovecraft.txt', 'r') as myfile:
-    shunned = myfile.read()
 
-ushunned = unicode(shunned, 'utf-8')
+def readBook(book_text):
+    with open (book_text, 'r') as book:
+        reader = book.read()
+    return unicode(reader, 'utf-8')
 
-tb = TextBlob(ushunned)
-
-paragraph = tb.sentences
-
-i = -1
-for sentence in paragraph:
-    i += 1
-    pol = sentence.sentiment.polarity
-    if i == 0:
-        write_type = 'w'
+def sentiment(textblob):
+    paragraph = textblob.sentences
+    i = -1
+    for sentence in paragraph:
+        i += 1
+        pol = sentence.sentiment.polarity
+        if i == 0:
+            write_type = 'w'
+            with open('shunned.csv', write_type) as text_file:
+                header = 'number,' + 'polarity,' + '\n'
+                text_file.write(str(header))
+        write_type = 'a'
         with open('shunned.csv', write_type) as text_file:
-            header = 'number,' + 'polarity,' + '\n'
-            text_file.write(str(header))
-    write_type = 'a'
-    with open('shunned.csv', write_type) as text_file:
-        newline = str(i) + ',' + str(pol) + '\n'
-        text_file.write(str(newline))
+            newline = str(i) + ',' + str(pol) + '\n'
+            text_file.write(str(newline))
+        df = pd.DataFrame.from_csv('shunned.csv')
+    return df
 
-df = pd.DataFrame.from_csv('shunned.csv')
+def graph(pandaFrame):
+    book_title = 'HP Lovecraft\'s The Shunned House'
+    plt.figure()
+    pandaFrame.polarity.plot(figsize=(12,5), color='b', 
+                              title='Sentiment Polarity for\n'+book_title)
+    plt.xlabel('Sentence number')
+    plt.ylabel('Sentiment polarity')
+    
+    pandaFrame['cum_sum'] = pandaFrame.polarity.cumsum()
+    
+    plt.figure()
+    pandaFrame.cum_sum.plot(figsize=(12,5), color='r', 
+                            title='Sentiment Polarity cumulative summation for\n'
+                            +book_title)
+    plt.xlabel('Sentence number')
+    plt.ylabel('Sum of Sentiment')
+    return
 
-book_title = 'HP Lovecraft\'s The Shunned House'
-plt.figure()
-df.polarity.plot(figsize=(12,5), color='b', title='Sentiment Polarity for\n'+book_title)
-plt.xlabel('Sentence number')
-plt.ylabel('Sentiment polarity')
 
-df['cum_sum'] = df.polarity.cumsum()
-
-plt.figure()
-df.cum_sum.plot(figsize=(12,5), color='r', 
-                title='Sentiment Polarity cumulative summation for\n'+book_title)
-plt.xlabel('Sentence number')
-plt.ylabel('Sum of Sentiment')
-
-df.head()
-df.describe()
-
-for i in df[df.polarity < -0.5].index:
-    print i, tb.sentences[i]
-
-words = re.findall(r'\w+', open('lovecraft.txt').read().lower())
-common = collections.Counter(words).most_common(10)
-
-df_freq = pd.DataFrame(common, columns=['word', 'freq'])
-df_freq.set_index('word').head()
+if __name__ == '__main__':
+    tb = TextBlob(readBook('lovecraft.txt'))
+    sentiment(tb)
+    
+    graph(df)
+    
+    df.head()
+    df.describe()
+    
+    for i in df[df.polarity < -0.5].index:
+        print i, tb.sentences[i]
+    
+    words = re.findall(r'\w+', open('lovecraft.txt').read().lower())
+    common = collections.Counter(words).most_common(10)
+    
+    df_freq = pd.DataFrame(common, columns=['word', 'freq'])
+    df_freq.set_index('word').head()
