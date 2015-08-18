@@ -18,6 +18,9 @@ def readBook(book_text):
     return unicode(reader, 'utf-8')
 
 def sentiment(textblob):
+    '''
+    analyzer used : pattern
+    '''
     paragraph = textblob.sentences
     i = -1
     for sentence in paragraph:
@@ -36,6 +39,9 @@ def sentiment(textblob):
     return df
 
 def graph(pandaFrame):
+    '''
+    hard coded ploting - polarity and sum of polarity plots
+    '''
     book_title = 'HP Lovecraft\'s The Shunned House'
     plt.figure()
     pandaFrame.polarity.plot(figsize=(12,5), color='b', 
@@ -53,15 +59,9 @@ def graph(pandaFrame):
     plt.ylabel('Sum of Sentiment')
     return
 
-
-if __name__ == '__main__':
-    tb = TextBlob(readBook('lovecraft.txt'))
-    sentiment(tb)
-    
-    graph(df)
-    
-    df.head()
-    df.describe()
+def analyze(df):
+#    df.head()
+#    df.describe()
     
     for i in df[df.polarity < -0.5].index:
         print i, tb.sentences[i]
@@ -71,3 +71,15 @@ if __name__ == '__main__':
     
     df_freq = pd.DataFrame(common, columns=['word', 'freq'])
     df_freq.set_index('word').head()
+
+    return
+
+if __name__ == '__main__':
+    tb = TextBlob(readBook('lovecraft.txt'))
+    df = sentiment(tb)
+    
+    graph(df)
+    analyze(df)
+    
+    
+    
