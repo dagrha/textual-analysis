@@ -7,7 +7,8 @@ Created on Tue Jul 14 14:29:58 2015
 
 from textblob import TextBlob
 import pandas as pd
-import pylab as plt
+#import pylab as plt
+import bokeh.plotting as bk
 import collections
 import re
 
@@ -38,26 +39,44 @@ def sentiment(textblob):
         df = pd.DataFrame.from_csv('shunned.csv')
     return df
 
-def graph(pandaFrame):
-    '''
-    hard coded ploting - polarity and sum of polarity plots
-    '''
-    book_title = 'HP Lovecraft\'s The Shunned House'
-    plt.figure()
-    pandaFrame.polarity.plot(figsize=(12,5), color='b', 
-                              title='Sentiment Polarity for\n'+book_title)
-    plt.xlabel('Sentence number')
-    plt.ylabel('Sentiment polarity')
+#def graph(pandaFrame):
+#    '''
+#    hard coded ploting - polarity and sum of polarity plots
+#    '''
+#    book_title = 'HP Lovecraft\'s The Shunned House'
+#    plt.figure()
+#    pandaFrame.polarity.plot(figsize=(12,5), color='b', 
+#                              title='Sentiment Polarity for\n'+book_title)
+#    plt.xlabel('Sentence number')
+#    plt.ylabel('Sentiment polarity')
+#    
+#    pandaFrame['cum_sum'] = pandaFrame.polarity.cumsum()
+#    
+#    plt.figure()
+#    pandaFrame.cum_sum.plot(figsize=(12,5), color='r', 
+#                            title='Sentiment Polarity cumulative summation for\n'
+#                            +book_title)
+#    plt.xlabel('Sentence number')
+#    plt.ylabel('Sum of Sentiment')
+#    return
     
-    pandaFrame['cum_sum'] = pandaFrame.polarity.cumsum()
+def sentencePlot(pandaFrame):
+    bk.output_file("test.html", title="Sentiment on Bokeh")
     
-    plt.figure()
-    pandaFrame.cum_sum.plot(figsize=(12,5), color='r', 
-                            title='Sentiment Polarity cumulative summation for\n'
-                            +book_title)
-    plt.xlabel('Sentence number')
-    plt.ylabel('Sum of Sentiment')
-    return
+    p1 = bk.figure(title="Fig Title",
+                   x_axis_label="Sentence Number",
+                   y_axis_label="Polarity")
+    p1.line(range(pandaFrame['polarity'].size),pandaFrame['polarity'])
+    return p1
+
+def sumPlot(pandaFrame):
+    bk.output_file("test.html", title="Sentiment on Bokeh")
+    
+    p1 = bk.figure(title="Fig Title",
+                   x_axis_label="Sentence Number",
+                   y_axis_label="Polarity")
+    p1.line(range(df.cumsum()['polarity'].size),df.cumsum()['polarity'])
+    return p1
 
 def analyze(df):
 #    df.head()
@@ -78,8 +97,12 @@ if __name__ == '__main__':
     tb = TextBlob(readBook('lovecraft.txt'))
     df = sentiment(tb)
     
-    graph(df)
+#    graph(df)
     analyze(df)
+    
+    p1 = sentencePlot(df)
+    p2 = sumPlot(df)
+    bk.show(bk.VBox(p1,p2))
     
     
     
