@@ -7,7 +7,9 @@ Created on Tue Jul 14 14:29:58 2015
 
 from textblob import TextBlob
 import pandas as pd
-import pylab as plt
+#import pylab as plt
+import bokeh.plotting as bk
+import bokeh.models as models
 import collections
 import re
 
@@ -38,26 +40,67 @@ def sentiment(textblob):
         df = pd.DataFrame.from_csv('shunned.csv')
     return df
 
-def graph(pandaFrame):
-    '''
-    hard coded ploting - polarity and sum of polarity plots
-    '''
-    book_title = 'HP Lovecraft\'s The Shunned House'
-    plt.figure()
-    pandaFrame.polarity.plot(figsize=(12,5), color='b', 
-                              title='Sentiment Polarity for\n'+book_title)
-    plt.xlabel('Sentence number')
-    plt.ylabel('Sentiment polarity')
+#def graph(pandaFrame):
+#    '''
+#    hard coded ploting - polarity and sum of polarity plots
+#    '''
+#    book_title = 'HP Lovecraft\'s The Shunned House'
+#    plt.figure()
+#    pandaFrame.polarity.plot(figsize=(12,5), color='b', 
+#                              title='Sentiment Polarity for\n'+book_title)
+#    plt.xlabel('Sentence number')
+#    plt.ylabel('Sentiment polarity')
+#    
+#    pandaFrame['cum_sum'] = pandaFrame.polarity.cumsum()
+#    
+#    plt.figure()
+#    pandaFrame.cum_sum.plot(figsize=(12,5), color='r', 
+#                            title='Sentiment Polarity cumulative summation for\n'
+#                            +book_title)
+#    plt.xlabel('Sentence number')
+#    plt.ylabel('Sum of Sentiment')
+#    return
     
-    pandaFrame['cum_sum'] = pandaFrame.polarity.cumsum()
+def sentencePlot(pandaFrame):
+    bk.output_file("test.html", title="Sentiment on Bokeh")
+    TOOLS = []
     
-    plt.figure()
-    pandaFrame.cum_sum.plot(figsize=(12,5), color='r', 
-                            title='Sentiment Polarity cumulative summation for\n'
-                            +book_title)
-    plt.xlabel('Sentence number')
-    plt.ylabel('Sum of Sentiment')
-    return
+    p1 = bk.figure(title="Fig Title",
+                   x_axis_label="Sentence Number",
+                   y_axis_label="Polarity",
+                   tools=TOOLS)
+    x=range(pandaFrame['polarity'].size)
+    y=pandaFrame['polarity']
+    p1.line(x,y)
+    
+    
+    # Add a circle, that is visible only when selected
+    source = models.ColumnDataSource({'x': x, 'y': y})
+    invisible_circle = models.Circle(x='x', y='y', fill_color='white',
+                                     fill_alpha=0.05, line_color=None, size=5)
+    visible_circle = models.Circle(x='x', y='y', fill_color='firebrick',
+                                   fill_alpha=0.5, line_color=None, size=5)
+    cr = p1.add_glyph(source, invisible_circle, selection_glyph=visible_circle,
+                      nonselection_glyph=invisible_circle)    
+    # Add a hover tool, that selects the circle
+    code = "source.set('selected', cb_data['index']);"
+    callback = models.Callback(args={'source': source}, code=code)
+    p1.add_tools(models.HoverTool(tooltips=None, callback=callback,
+                                  renderers=[cr], mode='hline'))
+    return p1
+
+def sumPlot(pandaFrame):
+    bk.output_file("test.html", title="Sentiment on Bokeh")
+    TOOLS = [models.HoverTool(tooltips=[
+                                ("Sentence","$index"),
+                                ("Sentiment","$y")])]
+    
+    p1 = bk.figure(title="Fig Title",
+                   x_axis_label="Sentence Number",
+                   y_axis_label="Polarity",
+                   tools=TOOLS)
+    p1.line(range(df.cumsum()['polarity'].size),df.cumsum()['polarity'])
+    return p1
 
 def analyze(df):
 #    df.head()
@@ -78,8 +121,12 @@ if __name__ == '__main__':
     tb = TextBlob(readBook('lovecraft.txt'))
     df = sentiment(tb)
     
-    graph(df)
+#    graph(df)
     analyze(df)
+    
+    p1 = sentencePlot(df)
+    p2 = sumPlot(df)
+    bk.show(bk.VBox(p1,p2))
     
     
     
