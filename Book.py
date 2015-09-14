@@ -27,30 +27,18 @@ class Book:
     #        self.reader = t.read()
     #        return unicode(self.reader)
 
-    def textblobify(self):
+    def to_textblob(self):
         self.read_book()
         self.tb = TextBlob(self.reader)
         return self.tb
 
-    def sentimentify(self):
-        self.textblobify()
-        paragraph = self.tb.sentences
-        i = -1
-        for sentence in paragraph:
-            i += 1
-            pol = sentence.sentiment.polarity
-            if i == 0:
-                with open('temp.csv', 'w') as text_file:
-                    header = 'number,' + 'polarity,' + '\n'
-                    text_file.write(str(header))
-            with open('temp.csv', 'a') as text_file:
-                newline = str(i) + ',' + str(pol) + '\n'
-                text_file.write(str(newline))
-        self.df = pd.DataFrame.from_csv('temp.csv')
+    def to_pandas(self):
+        self.to_textblob()
+        self.df = pd.DataFrame(self.tb.serialized)
         return self.df
 
     def count_words(self, n):
-        '''interger n for the nth most common words'''
+        '''integer n for the nth most common words'''
         words = re.findall(r'\w+', open(self.filename).read().lower())
         common = collections.Counter(words).most_common(n)
         self.df_freq = pd.DataFrame(common, columns=['word', 'freq'])
