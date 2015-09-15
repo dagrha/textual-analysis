@@ -64,9 +64,9 @@ def sentiment(textblob):
     
 def sentencePlot(pandaFrame):
     bk.output_file("test.html", title="Sentiment on Bokeh")
-    TOOLS = []
+    TOOLS = ['save']
     
-    p1 = bk.figure(title="Fig Title",
+    p1 = bk.figure(title="Sentence Polarity",
                    x_axis_label="Sentence Number",
                    y_axis_label="Polarity",
                    tools=TOOLS)
@@ -92,11 +92,11 @@ def sentencePlot(pandaFrame):
 
 def sumPlot(pandaFrame):
     bk.output_file("test.html", title="Sentiment on Bokeh")
-    TOOLS = [models.HoverTool(tooltips=[
+    TOOLS = ['save',models.HoverTool(tooltips=[
                                 ("Sentence","$index"),
                                 ("Sentiment","$y")])]
     
-    p1 = bk.figure(title="Fig Title",
+    p1 = bk.figure(title="Cumulative Polarity",
                    x_axis_label="Sentence Number",
                    y_axis_label="Polarity",
                    tools=TOOLS)
