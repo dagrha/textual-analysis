@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# # -*- coding: utf-8 -*-
 """
 Created on Tue Jul 14 14:29:58 2015
 
@@ -10,6 +10,7 @@ import pandas as pd
 #import pylab as plt
 import bokeh.plotting as bk
 import bokeh.models as models
+from bokeh.models import CustomJS
 import collections
 import re
 
@@ -17,7 +18,7 @@ import re
 def readBook(book_text):
     with open (book_text, 'r') as book:
         reader = book.read()
-    return unicode(reader, 'utf-8')
+    return reader
 
 def sentiment(textblob):
     '''
@@ -84,8 +85,8 @@ def sentencePlot(pandaFrame):
                       nonselection_glyph=invisible_circle)    
     # Add a hover tool, that selects the circle
     code = "source.set('selected', cb_data['index']);"
-    callback = models.Callback(args={'source': source}, code=code)
-    p1.add_tools(models.HoverTool(tooltips=None, callback=callback,
+    custJS = CustomJS(args={'source': source}, code=code)
+    p1.add_tools(models.HoverTool(tooltips=None, callback=custJS,
                                   renderers=[cr], mode='hline'))
     return p1
 
@@ -107,7 +108,7 @@ def analyze(df):
 #    df.describe()
     
     for i in df[df.polarity < -0.5].index:
-        print i, tb.sentences[i]
+        print (i, tb.sentences[i])
     
     words = re.findall(r'\w+', open('lovecraft.txt').read().lower())
     common = collections.Counter(words).most_common(10)
@@ -126,7 +127,7 @@ if __name__ == '__main__':
     
     p1 = sentencePlot(df)
     p2 = sumPlot(df)
-    bk.show(bk.VBox(p1,p2))
+    bk.show(bk.vplot(p1,p2))
     
     
     
