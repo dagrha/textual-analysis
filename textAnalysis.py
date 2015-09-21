@@ -110,7 +110,7 @@ def analyze(df):
     for i in df[df.polarity < -0.5].index:
         print (i, tb.sentences[i])
     
-    words = re.findall(r'\w+', open('lovecraft.txt').read().lower())
+    words = re.findall(r'\w+', open('books\lovecraft.txt').read().lower())
     common = collections.Counter(words).most_common(10)
     
     df_freq = pd.DataFrame(common, columns=['word', 'freq'])
@@ -119,7 +119,7 @@ def analyze(df):
     return
 
 if __name__ == '__main__':
-    tb = TextBlob(readBook('lovecraft.txt'))
+    tb = TextBlob(readBook('books\lovecraft.txt'))
     df = sentiment(tb)
     
 #    graph(df)
