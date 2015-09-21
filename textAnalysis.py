@@ -15,7 +15,8 @@ import collections
 import re
 
 
-def readBook(book_text):
+
+def read_book(book_text):
     with open (book_text, 'r') as book:
         reader = book.read()
     return reader
@@ -62,7 +63,7 @@ def sentiment(textblob):
 #    plt.ylabel('Sum of Sentiment')
 #    return
     
-def sentencePlot(pandaFrame):
+def sentence_plot(pandaFrame):
     bk.output_file("test.html", title="Sentiment on Bokeh")
     TOOLS = ['save']
     
@@ -90,7 +91,7 @@ def sentencePlot(pandaFrame):
                                   renderers=[cr], mode='hline'))
     return p1
 
-def sumPlot(pandaFrame):
+def sum_plot(pandaFrame):
     bk.output_file("test.html", title="Sentiment on Bokeh")
     TOOLS = ['save',models.HoverTool(tooltips=[
                                 ("Sentence","$index"),
@@ -119,14 +120,14 @@ def analyze(df):
     return
 
 if __name__ == '__main__':
-    tb = TextBlob(readBook('books\lovecraft.txt'))
+    tb = TextBlob(read_book('books\lovecraft.txt'))
     df = sentiment(tb)
     
 #    graph(df)
     analyze(df)
     
-    p1 = sentencePlot(df)
-    p2 = sumPlot(df)
+    p1 = sentence_plot(df)
+    p2 = sum_plot(df)
     bk.show(bk.vplot(p1,p2))
     
     

@@ -7,7 +7,6 @@ Created on Mon Aug 24 13:14:19 2015
 
 import bokeh.plotting as bk
 import bokeh.models as models
-import Book
 from bokeh.models.actions import Callback
 
 class SentimentGraph(object):
@@ -31,7 +30,7 @@ class SentimentGraph(object):
                        tools=TOOLS)
 
 
-    def plotSentence(self,pandaFrames):
+    def plot_sentence(self,pandaFrames):
         if type(pandaFrames)!=type([]):
             pandaFrames=[pandaFrames]
         for pf in pandaFrames:
@@ -53,7 +52,7 @@ class SentimentGraph(object):
         self.sentPlot.add_tools(models.HoverTool(tooltips=None,
                                       renderers=[cr], mode='hline'))
 
-    def plotSum(self,pandaFrames):
+    def plot_sum(self,pandaFrames):
         if type(pandaFrames)!=type([]):
             pandaFrames=[pandaFrames]
         for pf in pandaFrames:

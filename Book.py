@@ -16,28 +16,30 @@ class Book:
 
     def __init__(self, filename, **kwargs):
         self.filename = filename
+        self.read_book()
     '''python3 syntax:'''
     def read_book(self):
         with open(self.filename, 'r') as t:
-            self.reader = t.read()
-            return self.reader
+            bookString = t.readline()
+            self.to_textblob(bookString)
     '''python2 syntax:'''
     #def read_book(self):
     #    with open(self.filename, 'r') as t:
     #        self.reader = t.read()
     #        return unicode(self.reader)
 
-    def to_textblob(self):
-        self.read_book()
-        self.tb = TextBlob(self.reader)
-        return self.tb
+    def to_textblob(self,text):
+        self.tb = TextBlob(text)
 
     def to_pandas(self):
-        self.to_textblob()
         self.df = pd.DataFrame(self.tb.serialized)
+    
+    def get_textblob(self):
+        return self.tb
+    def get_pandas(self):
         return self.df
 
-    def count_words(self, n):
+    def common_words(self, n):
         '''integer n for the nth most common words'''
         words = re.findall(r'\w+', open(self.filename).read().lower())
         common = collections.Counter(words).most_common(n)
