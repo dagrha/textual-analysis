@@ -16,6 +16,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 # TextBlob (http://textblob.readthedocs.org/en/dev/)
 from textblob import TextBlob
+from textblob.sentiments import NaiveBayesAnalyzer
 # Bokeh plotting library (http://bokeh.pydata.org/en/latest/)
 from bokeh.io import show, save
 from bokeh.plotting import figure
@@ -69,7 +70,7 @@ for page in book_dict:
     chapter_no = book_dict[page][0]
     author = book_dict[page][1]
     text = book_dict[page][2]
-    tb = TextBlob(text)
+    tb = TextBlob(text, analyzer=NaiveBayesAnalyzer())
     chap_df = pd.DataFrame(tb.serialized)
     chap_df['chapter'] = chapter_no
     chap_df['author'] = author
@@ -118,15 +119,18 @@ print()
 '''Create a plot of the cumulative sentiment polarity, show it inline in the notebook,
 and save copies as png and html'''
 title = ' '.join(['Chapter', str(user_input), '-', df_chap.author.unique()[0],
-                  ':', 'cumulative senitment polarity'])
+                  ':', 'NB senitment polarity'])
 png_name = chapter_code + '_' + df_chap.author.unique()[0] + '.png'
 html_name = chapter_code + '_' + df_chap.author.unique()[0] + '_embed.html'
 
-line = Line(df_chap['chapter_cumsum'], title=title,
-            ylabel='Cumulative senitment polarity', xlabel='Sentence number',
-            title_text_font_size='18')
-show(line)
-save(line, png_name, title=title)
-html = file_html(line, CDN, html_name)
+TOOLS = "pan,wheel_zoom,reset,save"
+p1 = figure(title = title, tools=TOOLS,title_text_font_size='18')
+
+p1.line(df.index, df_chap['chapter_cumsum'])
+p1.line(df.index, df_chap['polarity'])
+
+show(p1)
+save(p1, png_name, title=title)
+html = file_html(p1, CDN, html_name)
 with open(html_name, 'w') as f:
     f.write(html)
