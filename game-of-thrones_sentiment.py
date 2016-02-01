@@ -126,8 +126,8 @@ html_name = chapter_code + '_' + df_chap.author.unique()[0] + '_embed.html'
 TOOLS = "pan,wheel_zoom,reset,save"
 p1 = figure(title = title, tools=TOOLS,title_text_font_size='18')
 
-p1.line(df.index, df_chap['chapter_cumsum'])
-p1.line(df.index, df_chap['polarity'])
+p1.line(df_chap.index, df_chap['chapter_cumsum'])
+p1.line(df_chap.index, df_chap['polarity'])
 
 show(p1)
 save(p1, png_name, title=title)
