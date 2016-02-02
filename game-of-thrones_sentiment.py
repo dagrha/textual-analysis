@@ -168,4 +168,3 @@ if __name__ == '__main__':
     chapterInfo(singleChapter(df,chapter))
     plotJPG(df,chapter)
 #    plotHTML(df,chapter)
-    
