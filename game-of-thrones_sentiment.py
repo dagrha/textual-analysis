@@ -22,9 +22,10 @@ from bokeh.io import show, save
 from bokeh.plotting import figure
 from bokeh.resources import CDN
 from bokeh.embed import file_html
-#from bokeh.charts import Line
+# Matplotlib for jpg
+import matplotlib.pyplot as plt
 
-def body(bk):
+def soup(bk):
     '''Instantiate BeautifulSoup objects, parse epub xml, and create an ordered dictionary of
     the book, with each entry being a chapter.  Keys to dictionary will be the page number
     of the first page of the chapter'''
@@ -50,15 +51,17 @@ def body(bk):
                 pass
     
         except AttributeError:
-            logging.exception('There has been an exception. Probably tried to load the front-or back-matter, which does not have attr tags.')
+            #ogging.exception('There has been an exception. Probably tried to load the front-or back-matter, which does not have attr tags.')
+            print('ATTRS missing from h1 =',soup.h1)
             pass
-    
     
     '''Book is slightly malformed in that it by default labels two chapters as "c01"
     so here I just re-label the prologue as "c00"'''
     book_dict['page1'][0] = 'c00'
     
+    return book_dict
     
+def frame(book_dict):
     '''Create a dataframe and populate the fields with information about each chapter'''
     df = pd.DataFrame()
     for page in book_dict:
@@ -116,7 +119,7 @@ def chapterInfo(df_chap):
     print()
     return
     
-def plot(df,chapter_code):
+def plotHTML(df,chapter_code):
     '''Create a plot of the cumulative sentiment polarity, show it inline in the notebook,
     and save copies as png and html'''
     df_chap = singleChapter(df,chapter_code)
@@ -128,21 +131,41 @@ def plot(df,chapter_code):
     TOOLS = "pan,wheel_zoom,reset,save"
     p1 = figure(title = title, tools=TOOLS,title_text_font_size='18')
     
-    p1.line(range(len(df_chap)), df_chap['chapter_cumsum'])
-    p1.line(range(len(df_chap)), df_chap['polarity'])
+    p1.line(df_chap.index, df_chap['chapter_cumsum'])
+    p1.line(df_chap.index, df_chap['polarity'])
     
     show(p1)
     save(p1, png_name, title=title, resources=CDN)
     html = file_html(p1, CDN, html_name)
     with open(html_name, 'w') as f:
         f.write(html)
+    return
 
+def plotJPG(df,chapter_code):
+    '''Create a plot of the cumulative sentiment polarity, show it inline in the notebook,
+    and save copies as png and html'''
+    df_chap = singleChapter(df,chapter_code)
+    title = ''.join(['Chapter ',  str(int(chapter_code[1:])), '-', df_chap.author.unique()[0]])
+    pdf_name = chapter_code + '_' + df_chap.author.unique()[0] + '.jpg'
+    
+    p1 = plt.figure()
+    plt.plot(df_chap.index, df_chap['chapter_cumsum'],label="Polarity")
+    plt.plot(df_chap.index, df_chap['subjectivity'],label="Subjectivity")
+    plt.title(title)
+    plt.xlim(df_chap.index[0],df_chap.index[-1])
+    plt.xlabel("Sentence Number")
+    plt.ylabel("Cumulative Sentiment Polarity")
+    plt.legend(loc="upper left")
+    plt.savefig(pdf_name, bbox='tight',)
+    return p1
 
 if __name__ == '__main__':
     '''Load the book as an epub book'''
     game_of_thrones = book.Book(r'books/game.epub')
     
-    df, chapter = body(game_of_thrones)
+    book_dict = soup(game_of_thrones)
+    df, chapter = frame(book_dict)
     chapterInfo(singleChapter(df,chapter))
-    plot(df,chapter)
+    plotJPG(df,chapter)
+#    plotHTML(df,chapter)
     
