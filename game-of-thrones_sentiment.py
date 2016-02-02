@@ -24,6 +24,8 @@ from bokeh.resources import CDN
 from bokeh.embed import file_html
 # Matplotlib for jpg
 import matplotlib.pyplot as plt
+#
+from blogpost import BlogPost
 
 def soup(bk):
     '''Instantiate BeautifulSoup objects, parse epub xml, and create an ordered dictionary of
@@ -146,9 +148,9 @@ def plotJPG(df,chapter_code):
     and save copies as png and html'''
     df_chap = singleChapter(df,chapter_code)
     title = ''.join(['Chapter ',  str(int(chapter_code[1:])), '-', df_chap.author.unique()[0]])
-    pdf_name = chapter_code + '_' + df_chap.author.unique()[0] + '.jpg'
+    filename = chapter_code + '_' + df_chap.author.unique()[0] + '.jpg'
     
-    p1 = plt.figure()
+    plt.figure()
     plt.plot(df_chap.index, df_chap['chapter_cumsum'],label="Polarity")
     plt.plot(df_chap.index, df_chap['subjectivity'],label="Subjectivity")
     plt.title(title)
@@ -156,8 +158,15 @@ def plotJPG(df,chapter_code):
     plt.xlabel("Sentence Number")
     plt.ylabel("Cumulative Sentiment Polarity")
     plt.legend(loc="upper left")
-    plt.savefig(pdf_name, bbox='tight',)
-    return p1
+    plt.savefig(filename, bbox='tight',)
+    return filename
+
+def postImage(file):
+    password = input('Password:')
+    wp = BlogPost('python', password)
+    wp.uploadJPG(file)
+    return
+
 
 if __name__ == '__main__':
     '''Load the book as an epub book'''
@@ -166,5 +175,9 @@ if __name__ == '__main__':
     book_dict = soup(game_of_thrones)
     df, chapter = frame(book_dict)
     chapterInfo(singleChapter(df,chapter))
-    plotJPG(df,chapter)
+    filename = plotJPG(df,chapter)
+    
+    user_input = input("Upload Image? (enter yes):")
+    if user_input == 'yes':
+        postImage(filename)
 #    plotHTML(df,chapter)
