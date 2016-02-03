@@ -16,7 +16,7 @@ class BlogPost:
     def __init__(self,user,password):
         self.wp = Client("http://dataslant.xyz/xmlrpc.php",user,password)
     
-    def postDraft(self, title, graph):
+    def postDraft(self, title, body):
         '''
         Creates a draft with title and graph
         
@@ -24,7 +24,7 @@ class BlogPost:
         '''
         post = WordPressPost()
         post.title = title
-        post.content = graph
+        post.content = body
 #        post,terms_names = {
 #            'post_tag': ['test'],
 #            'category': ['testCat']}

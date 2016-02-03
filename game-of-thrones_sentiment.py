@@ -24,8 +24,10 @@ from bokeh.resources import CDN
 from bokeh.embed import file_html
 # Matplotlib for jpg
 import matplotlib.pyplot as plt
-#
+#needs --> pip install python-wordpress-xmlrpc
 from blogpost import BlogPost
+#NLTK
+import nltk
 
 def soup(bk):
     '''Instantiate BeautifulSoup objects, parse epub xml, and create an ordered dictionary of
@@ -62,6 +64,10 @@ def soup(bk):
     book_dict['page1'][0] = 'c00'
     
     return book_dict
+
+def natural(book_dict):
+    
+    return
     
 def frame(book_dict):
     '''Create a dataframe and populate the fields with information about each chapter'''
@@ -108,18 +114,22 @@ def chapterInfo(df_chap):
     '''Quick look at the most negative and positive sentences/n
     df_chap is a given chapter dataframe
     '''
+    info=[]
     print('The most negative sentences are: ')
-    print(df_chap[df_chap.polarity < -0.5][['polarity', 'raw']].values)
+    info.append(df_chap[df_chap.polarity < -0.5][['polarity', 'raw']].values)
+    print(info[-1])
     print()
     print('The most positive sentences are: ')
-    print(df_chap[df_chap.polarity > 0.5][['polarity', 'raw']].values)
+    info.append(df_chap[df_chap.polarity > 0.5][['polarity', 'raw']].values)
+    print(info[-1])
     print()
     
     '''Create a table of summary statistics. Note that any sentence with a polarity
     of 0 has been excluded from the statistics!!'''
-    print(df_chap[df_chap.polarity != 0.0].describe().round(2))
+    info.append(df_chap[df_chap.polarity != 0.0].describe().round(2))
+    print(info[-1])
     print()
-    return
+    return info
     
 def plotHTML(df,chapter_code):
     '''Create a plot of the cumulative sentiment polarity, show it inline in the notebook,
@@ -161,10 +171,33 @@ def plotJPG(df,chapter_code):
     plt.savefig(filename, bbox='tight',)
     return filename
 
-def postImage(file):
+def startPost(title,file,info):
     password = input('Password:')
     wp = BlogPost('python', password)
-    wp.uploadJPG(file)
+#    wp.uploadJPG(file)
+    
+    body=''
+    body+='Most negative sentences are:\n'
+    for i in info[0].flatten():
+        if type(i)==type(''):
+            body+=i
+            body+='\n'
+        else:
+            body+='{:.2}'.format(i)
+            body+="\t"
+    body+='\n\nMost positive sentences are:\n'
+    for i in info[1].flatten():
+        if type(i)==type(''):
+            body+=i
+            body+='\n'
+        else:
+            body+='{:.2}'.format(i)
+            body+="\t"
+    ''' Table'''
+    body+='\n[table id='+title+' /]\n'
+    body+="Copy code below to TablePress Import as HTML\nChange ID to "+title+"\n\n"
+    body+=info[2].to_html()
+    wp.postDraft(title,body)
     return
 
 
@@ -174,10 +207,10 @@ if __name__ == '__main__':
     
     book_dict = soup(game_of_thrones)
     df, chapter = frame(book_dict)
-    chapterInfo(singleChapter(df,chapter))
+    info = chapterInfo(singleChapter(df,chapter))
     filename = plotJPG(df,chapter)
     
     user_input = input("Upload Image? (enter yes):")
     if user_input == 'yes':
-        postImage(filename)
+        startPost(filename[:-4],filename,info)
 #    plotHTML(df,chapter)
