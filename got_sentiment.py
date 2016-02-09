@@ -172,10 +172,10 @@ class ChapterAnalysis:
                                 ':', 'NB senitment polarity'])
         self.neg_sentences = str()
         for i in self.info[0]:
-            self.neg_sentences += '\t'.join([str(i[0]), '\t', i[1], '\n'])
+            self.neg_sentences += '\t'.join(['%.2f' %float(str(i[0])), i[1], '\n'])
         self.pos_sentences = str()
         for i in self.info[1]:
-            self.pos_sentences += '\t'.join([str(i[0]), '\t', i[1], '\n'])
+            self.pos_sentences += '\t'.join(['%.2f' %float(str(i[0])), i[1], '\n'])
         neg_title = '<strong>The most negative sentences are:</strong>'
         pos_title = '\n<strong>The most positive sentences are:</strong>'
         table_id_string = '\n\n[table id=' + self.chapter_code[1:].zfill(3) + ' /]'
