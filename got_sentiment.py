@@ -1,8 +1,9 @@
 # coding: utf-8
-# author: dagrha
+# authors: dagrha, ngreeney
 # Game of Thrones (Book 1) Sentiment Analysis.
-'''This script creates a basic chart and a statistical summary table for a selected
-chapter in the novel Game of Thrones (George R.R. Martin)'''
+'''This class creates a basic chart and a statistical summary table for a selected
+chapter in the novel Game of Thrones (George R.R. Martin). Can upload to WordPress
+site automatically.'''
 
 # collections from the Standard Library
 import collections
@@ -24,193 +25,178 @@ from bokeh.resources import CDN
 from bokeh.embed import file_html
 # Matplotlib for jpg
 import matplotlib.pyplot as plt
-#needs --> pip install python-wordpress-xmlrpc
+# needs --> pip install python-wordpress-xmlrpc
 from blogpost import BlogPost
-#NLTK
+# NLTK
 import nltk
 
-def soup(bk):
-    '''Instantiate BeautifulSoup objects, parse epub xml, and create an ordered dictionary of
-    the book, with each entry being a chapter.  Keys to dictionary will be the page number
-    of the first page of the chapter'''
-    book_dict = collections.OrderedDict()
-    for chapter in bk.chapters:
-        soup = BeautifulSoup(chapter.content, 'xml')
-        try:
-            if soup.h1.attrs['class'] == 'chapter0':
-                chapter_dict = {}
-                string = ""
-                for tag in soup('p', class_=['indent', 'nonindent']):
-                    string += str(tag.get_text()) + ' '
-                chapter_data = []
-                chapter_num = soup.h1.attrs['id']
-                chapter_data.append(chapter_num)
-                chapter_author = soup.h1.get_text()
-                chapter_data.append(chapter_author)
-                chapter_data.append(string)
-                page_num = soup.a.attrs['id']
-                chapter_dict[page_num] = chapter_data
-                book_dict.update(chapter_dict)
-            else:
+class ChapterAnalysis:
+
+    def __init__(self, epub):
+        self.epub = book.Book(epub)
+
+    def make_book(self):
+        self.book_dict = collections.OrderedDict()
+        for chapter in self.epub.chapters:
+            self.soup = BeautifulSoup(chapter.content, 'xml')
+            try:
+                if self.soup.h1.attrs['class'] == 'chapter0':
+                    self.chapter_dict = dict()
+                    string = str()
+                    for tag in self.soup('p', class_=['indent', 'nonindent']):
+                        string += str(tag.get_text()) + ' '
+                    self.chapter_data = list()
+                    chapter_num = self.soup.h1.attrs['id']
+                    self.chapter_data.append(chapter_num)
+                    chapter_author = self.soup.h1.get_text()
+                    self.chapter_data.append(chapter_author)
+                    self.chapter_data.append(string)
+                    page_num = self.soup.a.attrs['id']
+                    self.chapter_dict[page_num] = self.chapter_data
+                    self.book_dict.update(self.chapter_dict)
+                else:
+                    pass
+            except AttributeError:
+                print('ATTRS missing from h1 =', self.soup.h1)
                 pass
-    
-        except AttributeError:
-            #ogging.exception('There has been an exception. Probably tried to load the front-or back-matter, which does not have attr tags.')
-            print('ATTRS missing from h1 =',soup.h1)
-            pass
-    
-    '''Book is slightly malformed in that it by default labels two chapters as "c01"
-    so here I just re-label the prologue as "c00"'''
-    book_dict['page1'][0] = 'c00'
-    
-    return book_dict
 
-def natural(book_dict):
-    
-    return
-    
-def frame(book_dict):
-    '''Create a dataframe and populate the fields with information about each chapter'''
-    df = pd.DataFrame()
-    for page in book_dict:
-        #page_no = page
-        chapter_no = book_dict[page][0]
-        author = book_dict[page][1]
-        text = book_dict[page][2]
-        tb = TextBlob(text, analyzer=NaiveBayesAnalyzer())
-        chap_df = pd.DataFrame(tb.serialized)
-        chap_df['chapter'] = chapter_no
-        chap_df['author'] = author
-        df = pd.concat([df, chap_df])
-    
-    
-    '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
-    df['chapter_cumsum'] = df.groupby(['chapter'])['polarity'].cumsum()
-    
-    
-    '''Get user input for the chapter to examine'''
-    user_input = 0
-    while True:
-        try:
-            print()
-            user_input = int(input("Enter the number of the chapter you'd like to examine: "))
-        except ValueError:
-            print("Please give an integer instead.")
-            print()
-            continue
-        else:
-            print("Ok, thanks. I'll return a dataframe of information for chapter %s." %user_input)
-            print()
-            break
-    
-    chapter_code = 'c' + str(user_input).zfill(2)
-    return df, chapter_code
+    def renumber_prologue(self):
+        '''Book is slightly malformed in that it by default labels two chapters as "c01"
+        so here I just re-label the prologue as "c00"'''
+        self.book_dict['page1'][0] = 'c00'
 
-def singleChapter(df,chapter_code):
-    '''return dataframe of just the chapter chosen'''
-    return df[df.chapter == chapter_code]
+    def natural(self):
+        pass
 
-def chapterInfo(df_chap):
-    '''Quick look at the most negative and positive sentences/n
-    df_chap is a given chapter dataframe
-    '''
-    info=[]
-    print('The most negative sentences are: ')
-    info.append(df_chap[df_chap.polarity < -0.5][['polarity', 'raw']].values)
-    print(info[-1])
-    print()
-    print('The most positive sentences are: ')
-    info.append(df_chap[df_chap.polarity > 0.5][['polarity', 'raw']].values)
-    print(info[-1])
-    print()
-    
-    '''Create a table of summary statistics. Note that any sentence with a polarity
-    of 0 has been excluded from the statistics!!'''
-    info.append(df_chap[df_chap.polarity != 0.0].describe().round(2))
-    print(info[-1])
-    print()
-    return info
-    
-def plotHTML(df,chapter_code):
-    '''Create a plot of the cumulative sentiment polarity, show it inline in the notebook,
-    and save copies as png and html'''
-    df_chap = singleChapter(df,chapter_code)
-    title = ' '.join(['Chapter',  str(int(chapter_code[1:])), '-', df_chap.author.unique()[0],
-                      ':', 'NB senitment polarity'])
-    png_name = chapter_code + '_' + df_chap.author.unique()[0] + '.png'
-    html_name = chapter_code + '_' + df_chap.author.unique()[0] + '_embed.html'
-    
-    TOOLS = "pan,wheel_zoom,reset,save"
-    p1 = figure(title = title, tools=TOOLS,title_text_font_size='18')
-    
-    p1.line(df_chap.index, df_chap['chapter_cumsum'])
-    p1.line(df_chap.index, df_chap['polarity'])
-    
-    show(p1)
-    save(p1, png_name, title=title, resources=CDN)
-    html = file_html(p1, CDN, html_name)
-    with open(html_name, 'w') as f:
-        f.write(html)
-    return
+    def to_df(self):
+        '''Create a dataframe and populate the fields with information about each chapter'''
+        self.df = pd.DataFrame()
+        for page in self.book_dict:
+            chapter_no = self.book_dict[page][0]
+            author = self.book_dict[page][1]
+            text = self.book_dict[page][2]
+            self.tb = TextBlob(text, analyzer=NaiveBayesAnalyzer())
+            chap_df = pd.DataFrame(self.tb.serialized)
+            chap_df['chapter'] = chapter_no
+            chap_df['author'] = author
+            self.df = pd.concat([self.df, chap_df])
 
-def plotJPG(df,chapter_code):
-    '''Create a plot of the cumulative sentiment polarity, show it inline in the notebook,
-    and save copies as png and html'''
-    df_chap = singleChapter(df,chapter_code)
-    title = ''.join(['Chapter ',  str(int(chapter_code[1:])), '-', df_chap.author.unique()[0]])
-    filename = chapter_code + '_' + df_chap.author.unique()[0] + '.jpg'
-    
-    plt.figure()
-    plt.plot(df_chap.index, df_chap['chapter_cumsum'],label="Polarity")
-    plt.plot(df_chap.index, df_chap['subjectivity'],label="Subjectivity")
-    plt.title(title)
-    plt.xlim(df_chap.index[0],df_chap.index[-1])
-    plt.xlabel("Sentence Number")
-    plt.ylabel("Cumulative Sentiment Polarity")
-    plt.legend(loc="upper left")
-    plt.savefig(filename, bbox='tight',)
-    return filename
+        '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
+        self.df['chapter_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
 
-def startPost(title,file,info):
-    password = input('Password:')
-    wp = BlogPost('python', password)
-#    wp.uploadJPG(file)
-    
-    body=''
-    body+='Most negative sentences are:\n'
-    for i in info[0].flatten():
-        if type(i)==type(''):
-            body+=i
-            body+='\n'
-        else:
-            body+='{:.2}'.format(i)
-            body+="\t"
-    body+='\n\nMost positive sentences are:\n'
-    for i in info[1].flatten():
-        if type(i)==type(''):
-            body+=i
-            body+='\n'
-        else:
-            body+='{:.2}'.format(i)
-            body+="\t"
-    ''' Table'''
-    body+='\n[table id='+title+' /]\n'
-    body+="Copy code below to TablePress Import as HTML\nChange ID to "+title+"\n\n"
-    body+=info[2].to_html()
-    wp.postDraft(title,body)
-    return
+    def select_chapter(self):
+        '''Get user input for the chapter to examine'''
+        self.user_input = 0
+        while True:
+            try:
+                print()
+                self.user_input = int(input("Enter the number of the chapter you'd like to examine: "))
+            except ValueError:
+                print("Please give an integer instead.")
+                print()
+                continue
+            else:
+                print("A dataframe of information for chapter %s is being created." %self.user_input)
+                print()
+                break
+        self.chapter_code = 'c' + str(self.user_input).zfill(2)
+
+    def single_chapter(self):
+        '''Create dataframe of just the chosen chapter'''
+        self.df_chapter = self.df[self.df.chapter == self.chapter_code]
+
+    def chapter_info(self):
+        '''Quick look at the most negative and positive sentences/n
+        df_chapter is a dataframe for a given chapter
+        '''
+        self.info = list()
+        print('The most negative sentences are: ')
+        self.info.append(self.df_chapter[self.df_chapter.polarity < -0.5][['polarity', 'raw']].values)
+        print(self.info[-1])
+        print()
+        print('The most positive sentences are: ')
+        self.info.append(self.df_chapter[self.df_chapter.polarity > 0.5][['polarity', 'raw']].values)
+        print(self.info[-1])
+        print()
+
+        '''Create a table of summary statistics. Note that any sentence with a polarity
+        of 0 has been excluded from the statistics!!'''
+        self.info.append(self.df_chapter[self.df_chapter.polarity != 0.0].describe().round(2))
+        print(self.info[-1])
+        print()
+
+    def plot_html(self): #df, chapter_code):
+        '''Create a plot of the cumulative sentiment polarity, show it inline in the notebook,
+        and save copies as png and html'''
+        self.single_chapter()
+        self.title = ' '.join(['Chapter',  str(int(self.chapter_code[1:])), '-', self.df_chapter.author.unique()[0],
+                          ':', 'NB senitment polarity'])
+        png_name = self.chapter_code + '_' + self.df_chapter.author.unique()[0] + '.png'
+        html_name = self.chapter_code + '_' + self.df_chapter.author.unique()[0] + '_embed.html'
+
+        TOOLS = "pan,wheel_zoom,reset,save"
+        p1 = figure(title=self.title, tools=TOOLS, title_text_font_size='18')
+
+        p1.line(self.df_chapter.index, self.df_chapter['chapter_cumsum'])
+        p1.line(self.df_chapter.index, self.df_chapter['polarity'])
+
+        show(p1)
+        save(p1, png_name, title=self.title, resources=CDN)
+        self.html = file_html(p1, CDN, html_name)
+        with open(html_name, 'w') as f:
+            f.write(self.html)
+
+    def plot_jpg(self):
+        '''Create a plot of the cumulative sentiment polarity and subjectivity and save as JPEG image'''
+        self.single_chapter()
+        self.title = ' '.join(['Chapter',  str(int(self.chapter_code[1:])), '-', self.df_chapter.author.unique()[0],
+                                ':', 'NB senitment polarity'])
+        self.filename = self.chapter_code + '_' + self.df_chapter.author.unique()[0] + '.jpg'
+
+        plt.figure()
+        plt.plot(self.df_chapter.index, self.df_chapter['chapter_cumsum'], label="Polarity")
+        plt.plot(self.df_chapter.index, self.df_chapter['subjectivity'], label="Subjectivity")
+        plt.title(self.title)
+        plt.xlim(self.df_chapter.index[0], self.df_chapter.index[-1])
+        plt.xlabel("Sentence Number")
+        plt.ylabel("Cumulative Sentiment Polarity")
+        plt.legend(loc="upper left")
+        plt.savefig(self.filename, bbox='tight')
+
+    def start_post(self):
+        '''Post the positive and negative sentences along with the description table to WordPress'''
+        self.password = input('Password:')
+        self.wp = BlogPost('python', self.password)
+    #    self.wp.uploadJPG(file)
+        self.title =  ' '.join(['Chapter',  str(int(self.chapter_code[1:])), '-', self.df_chapter.author.unique()[0],
+                                ':', 'NB senitment polarity'])
+        self.neg_sentences = str()
+        for i in self.info[0]:
+            self.neg_sentences += '\t'.join([str(i[0]), '\t', i[1], '\n'])
+        self.pos_sentences = str()
+        for i in self.info[1]:
+            self.pos_sentences += '\t'.join([str(i[0]), '\t', i[1], '\n'])
+        neg_title = '<strong>The most negative sentences are:</strong>'
+        pos_title = '\n<strong>The most positive sentences are:</strong>'
+        table_id_string = '\n\n[table id=' + self.chapter_code[1:].zfill(3) + ' /]'
+        copy_string = "Copy code below to TablePress Import as HTML\nChange ID to " + self.title + "\n"
+        self.body = '\n'.join([neg_title, self.neg_sentences, pos_title, self.pos_sentences, table_id_string,
+                        copy_string, self.info[2].to_html()])
+        self.wp.postDraft(self.title, self.body)
 
 
 if __name__ == '__main__':
     '''Load the book as an epub book'''
-    game_of_thrones = book.Book(r'books/game.epub')
-    
-    book_dict = soup(game_of_thrones)
-    df, chapter = frame(book_dict)
-    info = chapterInfo(singleChapter(df,chapter))
-    filename = plotJPG(df,chapter)
-    
+    game_of_thrones = ChapterAnalysis(r'books/game.epub')
+    game_of_thrones.make_book()
+    game_of_thrones.renumber_prologue()
+    game_of_thrones.to_df()
+    game_of_thrones.select_chapter()
+    game_of_thrones.single_chapter()
+    game_of_thrones.chapter_info()
+    game_of_thrones.plot_html()
+    game_of_thrones.plot_jpg()
     user_input = input("Upload Image? (enter yes):")
     if user_input == 'yes':
-        startPost(filename[:-4],filename,info)
-#    plotHTML(df,chapter)
+        game_of_thrones.start_post()
+#    game_of_thrones.plot_html()
