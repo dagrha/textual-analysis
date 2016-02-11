@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 # needs --> pip install python-wordpress-xmlrpc
 from blogpost import BlogPost
 # NLTK
-import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
 
 class ChapterAnalysis:
 
@@ -65,8 +65,16 @@ class ChapterAnalysis:
         so here I just re-label the prologue as "c00"'''
         self.book_dict['page1'][0] = 'c00'
 
-    def natural(self):
-        pass
+    def repackChap(book_dict):
+        new_dict = {}
+        for item in book_dict.values():
+            new_dict[item[0]]=item[1:]
+        return new_dict
+    
+    def natural(book_dict,chapter):
+        #tokenize
+#        [word_tokenize(t) for t in sent_tokenize(s)]
+        return
 
     def to_df(self):
         '''Create a dataframe and populate the fields with information about each chapter'''
@@ -165,9 +173,11 @@ class ChapterAnalysis:
 
     def start_post(self):
         '''Post the positive and negative sentences along with the description table to WordPress'''
-        self.password = input('Password:')
-        self.wp = BlogPost('python', self.password)
-    #    self.wp.uploadJPG(file)
+        password = input('Password:')
+        wp = BlogPost('python', password)
+        user_input = input("Upload File? (enter yes):")
+        if user_input == 'yes':
+            wp.uploadJPG(self.filename)
         self.title =  ' '.join(['Chapter',  str(int(self.chapter_code[1:])), '-', self.df_chapter.author.unique()[0],
                                 ':', 'NB senitment polarity'])
         self.neg_sentences = str()
@@ -182,7 +192,7 @@ class ChapterAnalysis:
         copy_string = "Copy code below to TablePress Import as HTML\nChange ID to " + self.title + "\n"
         self.body = '\n'.join([neg_title, self.neg_sentences, pos_title, self.pos_sentences, table_id_string,
                         copy_string, self.info[2].to_html()])
-        self.wp.postDraft(self.title, self.body)
+        wp.postDraft(self.title, self.body)
 
 
 if __name__ == '__main__':
@@ -196,7 +206,7 @@ if __name__ == '__main__':
     game_of_thrones.chapter_info()
     game_of_thrones.plot_html()
     game_of_thrones.plot_jpg()
-    user_input = input("Upload Image? (enter yes):")
+    user_input = input("Start Post? (enter yes):")
     if user_input == 'yes':
         game_of_thrones.start_post()
 #    game_of_thrones.plot_html()
