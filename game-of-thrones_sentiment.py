@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 #needs --> pip install python-wordpress-xmlrpc
 from blogpost import BlogPost
 #NLTK
-import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
 
 def soup(bk):
     '''Instantiate BeautifulSoup objects, parse epub xml, and create an ordered dictionary of
@@ -65,8 +65,16 @@ def soup(bk):
     
     return book_dict
 
-def natural(book_dict):
+def repackChap(book_dict):
+    new_dict = {}
+    for item in book_dict.values():
+        new_dict[item[0]]=item[1:]
+    return new_dict
+
+def natural(book_dict,chapter):
+    #tokenize
     
+    [word_tokenize(t) for t in sent_tokenize(s)]
     return
     
 def frame(book_dict):
@@ -174,7 +182,7 @@ def plotJPG(df,chapter_code):
 def startPost(title,file,info):
     password = input('Password:')
     wp = BlogPost('python', password)
-#    wp.uploadJPG(file)
+    wp.uploadJPG(file)
     
     body=''
     body+='Most negative sentences are:\n'
@@ -206,11 +214,11 @@ if __name__ == '__main__':
     game_of_thrones = book.Book(r'books/game.epub')
     
     book_dict = soup(game_of_thrones)
-    df, chapter = frame(book_dict)
-    info = chapterInfo(singleChapter(df,chapter))
-    filename = plotJPG(df,chapter)
-    
-    user_input = input("Upload Image? (enter yes):")
-    if user_input == 'yes':
-        startPost(filename[:-4],filename,info)
+#    df, chapter = frame(book_dict)
+#    info = chapterInfo(singleChapter(df,chapter))
+#    filename = plotJPG(df,chapter)
+#    
+#    user_input = input("Upload Image? (enter yes):")
+#    if user_input == 'yes':
+#        startPost(filename[:-4],filename,info)
 #    plotHTML(df,chapter)
