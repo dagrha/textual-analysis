@@ -65,15 +65,29 @@ class ChapterAnalysis:
         so here I just re-label the prologue as "c00"'''
         self.book_dict['page1'][0] = 'c00'
 
-    def repackChap(book_dict):
+    def repackDict(self):
         new_dict = {}
-        for item in book_dict.values():
+        for item in self.book_dict.values():
             new_dict[item[0]]=item[1:]
-        return new_dict
+        self.book_dict = new_dict
+        return
     
-    def natural(book_dict,chapter):
-        #tokenize
-#        [word_tokenize(t) for t in sent_tokenize(s)]
+    def natural(self):
+        self.select_chapter()
+        '''tokenize - using chapter selected, pull text from dict and feed to NLTK
+            NLTK then breaks into sentences then into words ending with 2-d list of words'''
+        self.nat_chapter = [word_tokenize(t) for t in sent_tokenize(self.book_dict[self.chapter_code][1])]
+        
+        '''test difference to TextBlob Breakdown of sentences'''
+        for i in range(len(self.nat_chapter)):
+            x = ''.join(self.df_chapter.iat[i,3].split())
+            y = ''.join(self.nat_chapter[i])
+            if x!=y:
+                print("Difference at:")
+                print(x)
+                print(y)
+                break
+        
         return
 
     def to_df(self):
@@ -94,23 +108,28 @@ class ChapterAnalysis:
 
     def select_chapter(self):
         '''Get user input for the chapter to examine'''
-        self.user_input = 0
+        user_input = 0
         while True:
             try:
-                print()
-                self.user_input = int(input("Enter the number of the chapter you'd like to examine: "))
+                try: 
+                    if self.chapter_code != None:
+                        print("Current active Chapter is {}.".format(self.chapter_code),end='')
+                except AttributeError:
+                    pass
+                user_input = int(input("Enter the number of the chapter you'd like to examine: "))
             except ValueError:
                 print("Please give an integer instead.")
                 print()
                 continue
             else:
-                print("A dataframe of information for chapter %s is being created." %self.user_input)
+                print("Chapter %s will be set as active." %user_input)
                 print()
                 break
-        self.chapter_code = 'c' + str(self.user_input).zfill(2)
+        self.chapter_code = 'c' + str(user_input).zfill(2)
 
     def single_chapter(self):
-        '''Create dataframe of just the chosen chapter'''
+        '''Choose and create dataframe of just one chapter'''
+        self.select_chapter()
         self.df_chapter = self.df[self.df.chapter == self.chapter_code]
 
     def chapter_info(self):
@@ -201,12 +220,16 @@ if __name__ == '__main__':
     game_of_thrones.make_book()
     game_of_thrones.renumber_prologue()
     game_of_thrones.to_df()
-    game_of_thrones.select_chapter()
     game_of_thrones.single_chapter()
     game_of_thrones.chapter_info()
-    game_of_thrones.plot_html()
-    game_of_thrones.plot_jpg()
-    user_input = input("Start Post? (enter yes):")
-    if user_input == 'yes':
-        game_of_thrones.start_post()
+    
+    '''NLTK analysis'''
+    game_of_thrones.repackDict()
+    game_of_thrones.natural()
+    '''Commented out for NLTK testing'''
 #    game_of_thrones.plot_html()
+#    game_of_thrones.plot_jpg()
+#    user_input = input("Start Post? (enter yes):")
+#    if user_input == 'yes':
+#        game_of_thrones.start_post()
+##    game_of_thrones.plot_html()
