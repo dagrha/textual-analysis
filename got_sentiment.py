@@ -72,6 +72,10 @@ class ChapterAnalysis:
         self.book_dict = new_dict
         return
     
+    def dictToFrame(self):
+        self.pf = pd.DataFrame.from_dict(self.book_dict,orient="index")
+        self.pf.columns = ["Character","Text"]
+    
     def natural(self):
         self.select_chapter()
         '''tokenize - using chapter selected, pull text from dict and feed to NLTK
@@ -95,10 +99,10 @@ class ChapterAnalysis:
     def to_df(self):
         '''Create a dataframe and populate the fields with information about each chapter'''
         self.df = pd.DataFrame()
-        for page in self.book_dict:
-            chapter_no = self.book_dict[page][0]
-            author = self.book_dict[page][1]
-            text = self.book_dict[page][2]
+        for chapter in self.book_dict:
+            chapter_no = chapter
+            author = self.book_dict[chapter][0]
+            text = self.book_dict[chapter][1]
             self.tb = TextBlob(text, analyzer=NaiveBayesAnalyzer())
             chap_df = pd.DataFrame(self.tb.serialized)
             chap_df['chapter'] = chapter_no
@@ -221,12 +225,13 @@ if __name__ == '__main__':
     game_of_thrones = ChapterAnalysis(r'books/game.epub')
     game_of_thrones.make_book()
     game_of_thrones.renumber_prologue()
+    game_of_thrones.repackDict()
     game_of_thrones.to_df()
     game_of_thrones.single_chapter()
     game_of_thrones.chapter_info()
     
     '''NLTK analysis'''
-    game_of_thrones.repackDict()
+
     game_of_thrones.natural()
     '''Commented out for NLTK testing'''
 #    game_of_thrones.plot_html()
