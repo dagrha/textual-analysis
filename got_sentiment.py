@@ -76,7 +76,9 @@ class ChapterAnalysis:
         self.select_chapter()
         '''tokenize - using chapter selected, pull text from dict and feed to NLTK
             NLTK then breaks into sentences then into words ending with 2-d list of words'''
-        self.nat_chapter = [word_tokenize(t) for t in sent_tokenize(self.book_dict[self.chapter_code][1])]
+        text = self.book_dict[self.chapter_code][1]
+        text = text.replace('?”','? ”').replace('!”', '! ”').replace('.”', '. ”')
+        self.nat_chapter = [word_tokenize(t) for t in sent_tokenize(text)]
         
         '''test difference to TextBlob Breakdown of sentences'''
         for i in range(len(self.nat_chapter)):
