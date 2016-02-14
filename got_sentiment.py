@@ -29,6 +29,8 @@ import matplotlib.pyplot as plt
 from blogpost import BlogPost
 # NLTK
 from nltk.tokenize import sent_tokenize, word_tokenize
+# Numpy - handy arrays
+import numpy as np
 
 class ChapterAnalysis:
 
@@ -76,6 +78,21 @@ class ChapterAnalysis:
         self.pf = pd.DataFrame.from_dict(self.book_dict,orient="index")
         self.pf.columns = ["Character","Text"]
     
+    def textForCharacter(self,character):
+        try:
+            temp = self.pf[self.pf.Character == character.upper()]
+        except:
+            self.dictToFrame()
+            temp = self.pf[self.pf.Character == character.upper()]
+
+        text = ''
+        chapters = np.array(temp.index)
+        chapters.sort()
+        for chap in chapters:
+            text += temp.loc[chap]['Text'] + '\n\n'
+        
+        return text
+    
     def natural(self):
         self.select_chapter()
         '''tokenize - using chapter selected, pull text from dict and feed to NLTK
@@ -96,21 +113,64 @@ class ChapterAnalysis:
         
         return
 
-    def to_df(self):
+    def blobWholeBook(self):
         '''Create a dataframe and populate the fields with information about each chapter'''
         self.df = pd.DataFrame()
         for chapter in self.book_dict:
             chapter_no = chapter
             author = self.book_dict[chapter][0]
             text = self.book_dict[chapter][1]
-            self.tb = TextBlob(text, analyzer=NaiveBayesAnalyzer())
-            chap_df = pd.DataFrame(self.tb.serialized)
+            tb = TextBlob(text, analyzer=NaiveBayesAnalyzer())
+            chap_df = pd.DataFrame(tb.serialized)
             chap_df['chapter'] = chapter_no
             chap_df['author'] = author
             self.df = pd.concat([self.df, chap_df])
 
         '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
         self.df['chapter_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
+
+    def blobChapter(self):
+        '''Create a dataframe and populate the fields with information about the active chapter\n
+        Asks for a chapter if there is currently not an active chapter'''
+        self.df = pd.DataFrame()
+        try:
+            chapter = self.chapter_code
+        except:
+            self.select_chapter()
+            chapter = self.chapter_code
+        
+        chapter_no = chapter
+        author = self.book_dict[chapter][0]
+        text = self.book_dict[chapter][1]
+        tb = TextBlob(text, analyzer=NaiveBayesAnalyzer())
+        chap_df = pd.DataFrame(tb.serialized)
+        chap_df['chapter'] = chapter_no
+        chap_df['author'] = author
+        self.df = pd.concat([self.df, chap_df])
+
+        '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
+        self.df['chapter_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
+        self.single_chapter()
+
+    def blobText(self,grouping,text):
+        '''Create a dataframe and populate the fields with information passed to method\n\n
+        
+        grouping = string explaining what the text is, ie. 'Bran', 'Chapters 1-10', etc.\n
+        text = raw text to pass to text blob
+        '''
+        self.df = pd.DataFrame()
+        
+        chapter_no = '999'
+        author = grouping
+        tb = TextBlob(text, analyzer=NaiveBayesAnalyzer())
+        chap_df = pd.DataFrame(tb.serialized)
+        chap_df['chapter'] = chapter_no
+        chap_df['author'] = author
+        self.df = pd.concat([self.df, chap_df])
+
+        '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
+        self.df['chapter_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
+        self.df_chapter = self.df
 
     def select_chapter(self):
         '''Get user input for the chapter to examine'''
@@ -135,7 +195,6 @@ class ChapterAnalysis:
 
     def single_chapter(self):
         '''Choose and create dataframe of just one chapter'''
-        self.select_chapter()
         self.df_chapter = self.df[self.df.chapter == self.chapter_code]
 
     def chapter_info(self):
@@ -182,9 +241,14 @@ class ChapterAnalysis:
     def plot_jpg(self):
         '''Create a plot of the cumulative sentiment polarity and subjectivity and save as JPEG image'''
         self.single_chapter()
-        self.title = ' '.join(['Chapter',  str(int(self.chapter_code[1:])), '-', self.df_chapter.author.unique()[0],
+        try:
+            self.title = ' '.join(['Chapter',  str(int(self.chapter_code[1:])), '-', self.df_chapter.author.unique()[0],
                                 ':', 'NB senitment polarity'])
-        self.filename = self.chapter_code + '_' + self.df_chapter.author.unique()[0] + '.jpg'
+            self.filename = self.chapter_code + '_' + self.df_chapter.author.unique()[0] + '.jpg'
+        except:
+            self.title = "Test"
+            self.filename = "test.jpg"
+            self.df_chapter = self.df
 
         plt.figure()
         plt.plot(self.df_chapter.index, self.df_chapter['chapter_cumsum'], label="Polarity")
@@ -226,8 +290,8 @@ if __name__ == '__main__':
     game_of_thrones.make_book()
     game_of_thrones.renumber_prologue()
     game_of_thrones.repackDict()
-    game_of_thrones.to_df()
-    game_of_thrones.single_chapter()
+    game_of_thrones.blobChapter()
+#    game_of_thrones.single_chapter() #selected in blobChapter now
     game_of_thrones.chapter_info()
     
     '''NLTK analysis'''
