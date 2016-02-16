@@ -10,7 +10,7 @@ import collections
 import logging
 
 # libepub (https://github.com/jharjono/libepub/)
-from libepub import book
+from libepub.book import Book
 # pandas dataframe library (http://pandas.pydata.org/)
 import pandas as pd
 # Beautiful Soup (http://www.crummy.com/software/BeautifulSoup/)
@@ -32,34 +32,43 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 # Numpy - handy arrays
 import numpy as np
 
-class ChapterAnalysis:
+class BookAnalysis:
 
     def __init__(self, epub):
-        self.epub = book.Book(epub)
+        '''
+        Pulls all the chapter info from an epub file.
+        '''
+        ebook = Book(epub)
+        self.make_book(ebook)
 
-    def make_book(self):
+    def make_book(self,ebook):
+        '''
+        Breaks epub book into chapters and creates a dictionary called book_dict\n\n
+        
+        Takes in ebook which is a libepub Book type
+        '''
         self.book_dict = collections.OrderedDict()
-        for chapter in self.epub.chapters:
-            self.soup = BeautifulSoup(chapter.content, 'xml')
+        for chapter in ebook.chapters:
+            soup = BeautifulSoup(chapter.content, 'xml')
             try:
-                if self.soup.h1.attrs['class'] == 'chapter0':
-                    self.chapter_dict = dict()
+                if soup.h1.attrs['class'] == 'chapter0':
+                    chapter_dict = dict()
                     string = str()
-                    for tag in self.soup('p', class_=['indent', 'nonindent']):
+                    for tag in soup('p', class_=['indent', 'nonindent']):
                         string += str(tag.get_text()) + ' '
-                    self.chapter_data = list()
-                    chapter_num = self.soup.h1.attrs['id']
-                    self.chapter_data.append(chapter_num)
-                    chapter_author = self.soup.h1.get_text()
-                    self.chapter_data.append(chapter_author)
-                    self.chapter_data.append(string)
-                    page_num = self.soup.a.attrs['id']
-                    self.chapter_dict[page_num] = self.chapter_data
-                    self.book_dict.update(self.chapter_dict)
+                    chapter_data = list()
+                    chapter_num = soup.h1.attrs['id']
+                    chapter_data.append(chapter_num)
+                    chapter_author = soup.h1.get_text()
+                    chapter_data.append(chapter_author)
+                    chapter_data.append(string)
+                    page_num = soup.a.attrs['id']
+                    chapter_dict[page_num] = chapter_data
+                    self.book_dict.update(chapter_dict)
                 else:
                     pass
             except AttributeError:
-                print('ATTRS missing from h1 =', self.soup.h1)
+                print('ATTRS missing from h1 =', soup.h1)
                 pass
 
     def renumber_prologue(self):
@@ -279,15 +288,14 @@ class ChapterAnalysis:
         pos_title = '\n<strong>The most positive sentences are:</strong>'
         table_id_string = '\n\n[table id=' + self.chapter_code[1:].zfill(3) + ' /]'
         copy_string = "Copy code below to TablePress Import as HTML\nChange ID to " + self.title + "\n"
-        self.body = '\n'.join([neg_title, self.neg_sentences, pos_title, self.pos_sentences, table_id_string,
+        body = '\n'.join([neg_title, self.neg_sentences, pos_title, self.pos_sentences, table_id_string,
                         copy_string, self.info[2].to_html()])
-        wp.postDraft(self.title, self.body)
+        wp.postDraft(self.title, body)
 
 
 if __name__ == '__main__':
     '''Load the book as an epub book'''
-    game_of_thrones = ChapterAnalysis(r'books/game.epub')
-    game_of_thrones.make_book()
+    game_of_thrones = BookAnalysis(r'books/game.epub')
     game_of_thrones.renumber_prologue()
     game_of_thrones.repackDict()
     game_of_thrones.blobChapter()
