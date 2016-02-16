@@ -68,7 +68,7 @@ class BookAnalysis:
                 else:
                     pass
             except AttributeError:
-                print('ATTRS missing from h1 =', soup.h1)
+                print('No h1 in {} --- Skipping'.format(soup.div.attrs))
                 pass
 
     def renumber_prologue(self):
@@ -108,12 +108,12 @@ class BookAnalysis:
             NLTK then breaks into sentences then into words ending with 2-d list of words'''
         text = self.book_dict[self.chapter_code][1]
         text = text.replace('?”','? ”').replace('!”', '! ”').replace('.”', '. ”')
-        self.nat_chapter = [word_tokenize(t) for t in sent_tokenize(text)]
+        self.nat_analysis = [word_tokenize(t) for t in sent_tokenize(text)]
         
         '''test difference to TextBlob Breakdown of sentences'''
-        for i in range(len(self.nat_chapter)):
+        for i in range(len(self.nat_analysis)):
             x = ''.join(self.df_chapter.iat[i,3].split())
-            y = ''.join(self.nat_chapter[i])
+            y = ''.join(self.nat_analysis[i])
             if x!=y:
                 print("Difference at:")
                 print(x)
