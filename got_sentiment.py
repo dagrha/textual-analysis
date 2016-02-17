@@ -77,7 +77,7 @@ class BookAnalysis:
         self.book_dict['page1'][0] = 'c00'
 
     def repackDict(self):
-        new_dict = {}
+        new_dict = collections.OrderedDict()
         for item in self.book_dict.values():
             new_dict[item[0]]=item[1:]
         self.book_dict = new_dict
@@ -111,8 +111,9 @@ class BookAnalysis:
         self.nat_analysis = [word_tokenize(t) for t in sent_tokenize(text)]
         
         '''test difference to TextBlob Breakdown of sentences'''
+        temp_df = self.single_chapter()
         for i in range(len(self.nat_analysis)):
-            x = ''.join(self.df_chapter.iat[i,3].split())
+            x = ''.join(temp_df.iat[i,3].split())
             y = ''.join(self.nat_analysis[i])
             if x!=y:
                 print("Difference at:")
@@ -159,7 +160,6 @@ class BookAnalysis:
 
         '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
         self.df['chapter_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
-        self.single_chapter()
 
     def blobText(self,grouping,text):
         '''Create a dataframe and populate the fields with information passed to method\n\n
@@ -179,7 +179,6 @@ class BookAnalysis:
 
         '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
         self.df['chapter_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
-        self.df_chapter = self.df
 
     def select_chapter(self):
         '''Get user input for the chapter to examine'''
@@ -203,43 +202,44 @@ class BookAnalysis:
         self.chapter_code = 'c' + str(user_input).zfill(2)
 
     def single_chapter(self):
-        '''Choose and create dataframe of just one chapter'''
-        self.df_chapter = self.df[self.df.chapter == self.chapter_code]
+        '''Returns subset of dataframe matching active chapter'''
+        return self.df[self.df.chapter == self.chapter_code]
 
     def chapter_info(self):
         '''Quick look at the most negative and positive sentences/n
-        df_chapter is a dataframe for a given chapter
+        temp_df is a dataframe for the current active chapter
         '''
+        temp_df = self.single_chapter()
         self.info = list()
         print('The most negative sentences are: ')
-        self.info.append(self.df_chapter[self.df_chapter.polarity < -0.5][['polarity', 'raw']].values)
+        self.info.append(temp_df[temp_df.polarity < -0.5][['polarity', 'raw']].values)
         print(self.info[-1])
         print()
         print('The most positive sentences are: ')
-        self.info.append(self.df_chapter[self.df_chapter.polarity > 0.5][['polarity', 'raw']].values)
+        self.info.append(temp_df[temp_df.polarity > 0.5][['polarity', 'raw']].values)
         print(self.info[-1])
         print()
 
         '''Create a table of summary statistics. Note that any sentence with a polarity
         of 0 has been excluded from the statistics!!'''
-        self.info.append(self.df_chapter[self.df_chapter.polarity != 0.0].describe().round(2))
+        self.info.append(temp_df[temp_df.polarity != 0.0].describe().round(2))
         print(self.info[-1])
         print()
 
     def plot_html(self): #df, chapter_code):
         '''Create a plot of the cumulative sentiment polarity, show it inline in the notebook,
         and save copies as png and html'''
-        self.single_chapter()
-        self.title = ' '.join(['Chapter',  str(int(self.chapter_code[1:])), '-', self.df_chapter.author.unique()[0],
+        temp_df = self.single_chapter()
+        self.title = ' '.join(['Chapter',  str(int(self.chapter_code[1:])), '-', temp_df.author.unique()[0],
                           ':', 'NB senitment polarity'])
-        png_name = self.chapter_code + '_' + self.df_chapter.author.unique()[0] + '.png'
-        html_name = self.chapter_code + '_' + self.df_chapter.author.unique()[0] + '_embed.html'
+        png_name = self.chapter_code + '_' + temp_df.author.unique()[0] + '.png'
+        html_name = self.chapter_code + '_' + temp_df.author.unique()[0] + '_embed.html'
 
         TOOLS = "pan,wheel_zoom,reset,save"
         p1 = figure(title=self.title, tools=TOOLS, title_text_font_size='18')
 
-        p1.line(self.df_chapter.index, self.df_chapter['chapter_cumsum'])
-        p1.line(self.df_chapter.index, self.df_chapter['polarity'])
+        p1.line(temp_df.index, temp_df['chapter_cumsum'])
+        p1.line(temp_df.index, temp_df['polarity'])
 
         show(p1)
         save(p1, png_name, title=self.title, resources=CDN)
@@ -249,21 +249,20 @@ class BookAnalysis:
 
     def plot_jpg(self):
         '''Create a plot of the cumulative sentiment polarity and subjectivity and save as JPEG image'''
-        self.single_chapter()
+        temp_df = self.single_chapter()
         try:
-            self.title = ' '.join(['Chapter',  str(int(self.chapter_code[1:])), '-', self.df_chapter.author.unique()[0],
+            self.title = ' '.join(['Chapter',  str(int(self.chapter_code[1:])), '-', temp_df.author.unique()[0],
                                 ':', 'NB senitment polarity'])
-            self.filename = self.chapter_code + '_' + self.df_chapter.author.unique()[0] + '.jpg'
+            self.filename = self.chapter_code + '_' + temp_df.author.unique()[0] + '.jpg'
         except:
             self.title = "Test"
             self.filename = "test.jpg"
-            self.df_chapter = self.df
 
         plt.figure()
-        plt.plot(self.df_chapter.index, self.df_chapter['chapter_cumsum'], label="Polarity")
-        plt.plot(self.df_chapter.index, self.df_chapter['subjectivity'], label="Subjectivity")
+        plt.plot(temp_df.index, temp_df['chapter_cumsum'], label="Polarity")
+        plt.plot(temp_df.index, temp_df['subjectivity'], label="Subjectivity")
         plt.title(self.title)
-        plt.xlim(self.df_chapter.index[0], self.df_chapter.index[-1])
+        plt.xlim(temp_df.index[0], temp_df.index[-1])
         plt.xlabel("Sentence Number")
         plt.ylabel("Cumulative Sentiment Polarity")
         plt.legend(loc="upper left")
