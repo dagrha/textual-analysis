@@ -70,6 +70,9 @@ class BookAnalysis:
             except AttributeError:
                 print('No h1 in {} --- Skipping'.format(soup.div.attrs))
                 pass
+        self.renumber_prologue()
+        self.repackDict()
+        self.dictToFrame()
 
     def renumber_prologue(self):
         '''Book is slightly malformed in that it by default labels two chapters as "c01"
@@ -199,6 +202,9 @@ class BookAnalysis:
                 print("Chapter %s will be set as active." %user_input)
                 print()
                 break
+            self.set_chapter(user_input)
+        
+    def set_chapter(self,chap_num):
         self.chapter_code = 'c' + str(user_input).zfill(2)
 
     def single_chapter(self):
@@ -295,15 +301,22 @@ class BookAnalysis:
 if __name__ == '__main__':
     '''Load the book as an epub book'''
     game_of_thrones = BookAnalysis(r'books/game.epub')
-    game_of_thrones.renumber_prologue()
-    game_of_thrones.repackDict()
-    game_of_thrones.blobChapter()
+    
+    user_input = input("What to analyze?\nChapter Number, Character Name, else Whole Book:  ")
+    try:
+        chap_num = int(user_input)
+        game_of_thrones.set_chapter(chap_num)
+        game_of_thrones.blobChapter()
+        game_of_thrones.chapter_info()
 #    game_of_thrones.single_chapter() #selected in blobChapter now
-    game_of_thrones.chapter_info()
+    except:
+        if user_input.upper() in game_of_thrones.pf['Character'].unique():
+            print(user_input+' in Book')
+        else:
+            print(user_input+' not in Book')
     
     '''NLTK analysis'''
-
-    game_of_thrones.natural()
+#    game_of_thrones.natural()
     '''Commented out for NLTK testing'''
 #    game_of_thrones.plot_html()
 #    game_of_thrones.plot_jpg()
