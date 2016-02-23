@@ -71,26 +71,26 @@ class BookAnalysis:
                 print('No h1 in {} --- Skipping'.format(soup.div.attrs))
                 pass
         self.renumber_prologue()
-        self.repackDict()
-        self.dictToFrame()
+        self.repack_dict()
+        self.dict_to_frame()
 
     def renumber_prologue(self):
         '''Book is slightly malformed in that it by default labels two chapters as "c01"
         so here I just re-label the prologue as "c00"'''
         self.book_dict['page1'][0] = 'c00'
 
-    def repackDict(self):
+    def repack_dict(self):
         new_dict = collections.OrderedDict()
         for item in self.book_dict.values():
             new_dict[item[0]]=item[1:]
         self.book_dict = new_dict
         return
     
-    def dictToFrame(self):
+    def dict_to_frame(self):
         self.pf = pd.DataFrame.from_dict(self.book_dict,orient="index")
         self.pf.columns = ["Character","Text"]
     
-    def textForCharacter(self,character):
+    def text_for_character(self,character):
         try:
             temp = self.pf[self.pf.Character == character.upper()]
         except:
@@ -313,7 +313,8 @@ if __name__ == '__main__':
         if user_input.upper() in game_of_thrones.pf['Character'].unique():
             print(user_input+' in Book')
         else:
-            print(user_input+' not in Book')
+            print("Blob-ing the whole book")
+            game_of_thrones.blobWholeBook()
     
     '''NLTK analysis'''
 #    game_of_thrones.natural()
