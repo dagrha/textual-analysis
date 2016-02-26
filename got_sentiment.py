@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 from blogpost import BlogPost
 # NLTK
 from nltk.tokenize import sent_tokenize, word_tokenize
+import nltk.data as nldata
 # Numpy - handy arrays
 import numpy as np
 
@@ -89,6 +90,7 @@ class BookAnalysis:
     def dict_to_frame(self):
         self.pf = pd.DataFrame.from_dict(self.book_dict,orient="index")
         self.pf.columns = ["Character","Text"]
+        return
     
     def text_for_character(self,character):
         try:
@@ -126,6 +128,22 @@ class BookAnalysis:
         
         return
 
+    def blobWholeBook_old(self):
+        '''Create a dataframe and populate the fields with information about each chapter'''
+        self.df = pd.DataFrame()
+        for chapter in self.book_dict:
+            chapter_no = chapter
+            author = self.book_dict[chapter][0]
+            text = self.book_dict[chapter][1]
+            tb = TextBlob(text, analyzer=NaiveBayesAnalyzer())
+            chap_df = pd.DataFrame(tb.serialized)
+            chap_df['chapter'] = chapter_no
+            chap_df['author'] = author
+            self.df = pd.concat([self.df, chap_df])
+
+        '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
+        self.df['chapter_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
+    
     def blobWholeBook(self):
         '''Create a dataframe and populate the fields with information about each chapter'''
         self.df = pd.DataFrame()
@@ -314,7 +332,7 @@ if __name__ == '__main__':
             print(user_input+' in Book')
         else:
             print("Blob-ing the whole book")
-            game_of_thrones.blobWholeBook()
+            game_of_thrones.blobWholeBook_old()
     
     '''NLTK analysis'''
 #    game_of_thrones.natural()
