@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 # needs --> pip install python-wordpress-xmlrpc
 from blogpost import BlogPost
 # NLTK
+import nltk.tokenize.punkt as punkt
 from nltk.tokenize import sent_tokenize, word_tokenize
 import nltk.data as nldata
 # Numpy - handy arrays
@@ -106,6 +107,21 @@ class BookAnalysis:
             text += temp.loc[chap]['Text'] + '\n\n'
         
         return text
+    
+    def tokenize(self,text):
+        '''
+        breaks the dataframe from rows of chapters down to rows of sentences
+        '''
+        
+        trainer = punkt.PunktTrainer()
+        trainer.ABBREV = 1.0
+        for i in self.pf.Text:
+            trainer.train(i,verbose=True,finalize=False)
+        param = trainer.get_params()
+        
+        tok = punkt.PunktSentenceTokenizer(param,True)
+        
+        return tok.tokenize(text)
     
     def natural(self):
         self.select_chapter()
