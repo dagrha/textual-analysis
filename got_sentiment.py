@@ -58,6 +58,8 @@ class BookAnalysis:
                     string = str()
                     for tag in soup('p', class_=['indent', 'nonindent']):
                         string += str(tag.get_text()) + ' '
+                    string = string.replace('“','"')
+                    string = string.replace('”','"')
                     chapter_data = list()
                     chapter_num = soup.h1.attrs['id']
                     chapter_data.append(chapter_num)
