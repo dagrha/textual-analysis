@@ -348,6 +348,8 @@ if __name__ == '__main__':
     except:
         if user_input.upper() in game_of_thrones.pf['Character'].unique():
             print(user_input+' in Book')
+            game_of_thrones.blobWholeBook_old()
+            charater = game_of_thrones.df.groupby('author').get_group(user_input.upper())
         else:
             print("Blob-ing the whole book")
             game_of_thrones.blobWholeBook_old()

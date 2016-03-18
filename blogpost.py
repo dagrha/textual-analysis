@@ -5,6 +5,7 @@ Created on Tue Jan 26 10:36:16 2016
 @author: ngreeney
 """
 
+#pip install python_wordpress_xmlrpc
 from wordpress_xmlrpc import Client, WordPressPost
 from wordpress_xmlrpc.methods.posts import GetPosts, NewPost
 #from wordpress_xmlrpc.methods.users import GetUserInfo
