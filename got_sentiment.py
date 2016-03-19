@@ -145,22 +145,6 @@ class BookAnalysis:
                 break
         
         return
-
-    def blobWholeBook_old(self):
-        '''Create a dataframe and populate the fields with information about each chapter'''
-        self.df = pd.DataFrame()
-        for chapter in self.book_dict:
-            chapter_no = chapter
-            author = self.book_dict[chapter][0]
-            text = self.book_dict[chapter][1]
-            tb = TextBlob(text, analyzer=NaiveBayesAnalyzer())
-            chap_df = pd.DataFrame(tb.serialized)
-            chap_df['chapter'] = chapter_no
-            chap_df['author'] = author
-            self.df = pd.concat([self.df, chap_df])
-
-        '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
-        self.df['chapter_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
     
     def blobWholeBook(self):
         '''Create a dataframe and populate the fields with information about each chapter'''
@@ -175,8 +159,11 @@ class BookAnalysis:
             chap_df['author'] = author
             self.df = pd.concat([self.df, chap_df])
 
-        '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
-        self.df['chapter_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
+        '''Group the dataframe by chapter, author; run a cumulative summation of the polarity over each group.'''
+        self.df.reset_index(drop=True, inplace=True)
+        self.df['chap_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
+        self.df['char_cumsum'] = self.df.groupby(['author'])['polarity'].cumsum()
+        self.df['book_cumsum'] = self.df['polarity'].cumsum()
 
     def blobChapter(self):
         '''Create a dataframe and populate the fields with information about the active chapter\n
@@ -198,7 +185,7 @@ class BookAnalysis:
         self.df = pd.concat([self.df, chap_df])
 
         '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
-        self.df['chapter_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
+        self.df['chap_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
 
     def blobText(self,grouping,text):
         '''Create a dataframe and populate the fields with information passed to method\n\n
@@ -217,7 +204,7 @@ class BookAnalysis:
         self.df = pd.concat([self.df, chap_df])
 
         '''Group the dataframe by chapter and run a cumulative summation of the polarity over each chapter.'''
-        self.df['chapter_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
+        self.df['chap_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
 
     def select_chapter(self):
         '''Get user input for the chapter to examine'''
@@ -280,7 +267,7 @@ class BookAnalysis:
         TOOLS = "pan,wheel_zoom,reset,save"
         p1 = figure(title=self.title, tools=TOOLS, title_text_font_size='18')
 
-        p1.line(temp_df.index, temp_df['chapter_cumsum'])
+        p1.line(temp_df.index, temp_df['chap_cumsum'])
         p1.line(temp_df.index, temp_df['polarity'])
 
         show(p1)
@@ -301,7 +288,7 @@ class BookAnalysis:
             self.filename = "test.jpg"
 
         plt.figure()
-        plt.plot(temp_df.index, temp_df['chapter_cumsum'], label="Polarity")
+        plt.plot(temp_df.index, temp_df['chap_cumsum'], label="Polarity")
         plt.plot(temp_df.index, temp_df['subjectivity'], label="Subjectivity")
         plt.title(self.title)
         plt.xlim(temp_df.index[0], temp_df.index[-1])
@@ -348,11 +335,11 @@ if __name__ == '__main__':
     except:
         if user_input.upper() in game_of_thrones.pf['Character'].unique():
             print(user_input+' in Book')
-            game_of_thrones.blobWholeBook_old()
-            charater = game_of_thrones.df.groupby('author').get_group(user_input.upper())
+            game_of_thrones.blobWholeBook()
+            character = game_of_thrones.df.groupby('author').get_group(user_input.upper())
         else:
             print("Blob-ing the whole book")
-            game_of_thrones.blobWholeBook_old()
+            game_of_thrones.blobWholeBook()
     
     '''NLTK analysis'''
 #    game_of_thrones.natural()
