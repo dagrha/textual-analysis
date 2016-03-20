@@ -246,6 +246,10 @@ class BookAnalysis:
     def single_chapter(self):
         '''Returns subset of dataframe matching active chapter'''
         return self.df[self.df.chapter == self.chapter_code]
+    def get_chardf(self,character):
+        char_df = self.df[self.df['author']==character.upper()]
+        char_df.reset_index(inplace=True, drop=True)
+        return char_df
 
     def chapter_info(self):
         '''Quick look at the most negative and positive sentences/n
@@ -311,15 +315,15 @@ class BookAnalysis:
         plt.savefig(self.filename, bbox='tight')
         return
         
-    def plot_singleChar(self,character=None):
+    def plot_singleChar(self,character):
         '''Plot just the chapters written from a single characters POV/n/n
         
         character = name of chapter example='bran'
         '''
-        char_df = game_of_thrones.df[game_of_thrones.df['author']==character.upper()]
+        char_df = self.get_chardf(character)
         
         plt.figure()
-        plt.plot(char_df.char_cumsum.tolist())
+        plt.plot(char_df.char_cumsum)
         plt.title('Sentiment Polarity across all {} chapters'.format(character.upper()))
         plt.xlabel('Sentence Number')
         plt.ylabel('Cumulative Sentiment Polarity')
@@ -333,6 +337,20 @@ class BookAnalysis:
         plt.xlabel('Sentence Number')
         plt.ylabel('Cumulative Sentiment Polarity')
         return
+
+    def add_chapterlines(self,df):
+        '''Adds vertical lines at the start of each chapter
+        '''
+        df['sent_num'] = df.index
+        idx = df.groupby('chapter')['start_index'].idxmin()
+        chap_bounds = df.loc[idx, ['sent_num','char_cumsum', 'chapter']]
+        chap_bound_list = chap_bounds[['sent_num','char_cumsum', 'chapter']].values.tolist()
+        
+        ylim=plt.ylim()
+        for item in chap_bound_list:
+            plt.vlines(item[0],ylim[0],ylim[1],'k','dotted')
+            plt.text(item[0]+5, ylim[1]*0.97, item[2], fontsize=14)
+            
 
     def start_post(self):
         '''Post the positive and negative sentences along with the description table to WordPress'''
@@ -360,25 +378,27 @@ class BookAnalysis:
 
 if __name__ == '__main__':
     '''Load the book as an epub book'''
-    game_of_thrones = BookAnalysis(r'books/game.epub')
+    got = BookAnalysis(r'books/game.epub')
     
     user_input = input("What to analyze?\nChapter Number, Character Name, else Whole Book:  ")
     try:
         chap_num = int(user_input)
-        game_of_thrones.set_chapter(chap_num)
-        game_of_thrones.blobChapter()
-        game_of_thrones.chapter_info()
+        got.set_chapter(chap_num)
+        got.blobChapter()
+        got.chapter_info()
 #    game_of_thrones.single_chapter() #selected in blobChapter now
     except:
-        if user_input.upper() in game_of_thrones.pf['Character'].unique():
+        if user_input.upper() in got.pf['Character'].unique():
             print(user_input+' in Book')
-            game_of_thrones.blobWholeBook()
-            game_of_thrones.plot_singleChar(user_input)
+            got.blobWholeBook()
+            got.plot_singleChar(user_input)
+            got.add_chapterlines(got.get_chardf(user_input))
             
         else:
             print("Blob-ing the whole book")
-            game_of_thrones.blobWholeBook()
-            game_of_thrones.plot_wholeBook()
+            got.blobWholeBook()
+            got.plot_wholeBook()
+            got.add_chapterlines(got.df)
     
     '''NLTK analysis'''
 #    game_of_thrones.natural()
