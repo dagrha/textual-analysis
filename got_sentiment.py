@@ -276,7 +276,7 @@ class BookAnalysis:
         with open(html_name, 'w') as f:
             f.write(self.html)
 
-    def plot_jpg(self):
+    def plot_singleChap(self):
         '''Create a plot of the cumulative sentiment polarity and subjectivity and save as JPEG image'''
         temp_df = self.single_chapter()
         try:
@@ -296,6 +296,30 @@ class BookAnalysis:
         plt.ylabel("Cumulative Sentiment Polarity")
         plt.legend(loc="upper left")
         plt.savefig(self.filename, bbox='tight')
+        return
+        
+    def plot_singleChar(self,character=None):
+        '''Plot just the chapters written from a single characters POV/n/n
+        
+        character = name of chapter example='bran'
+        '''
+        char_df = game_of_thrones.df[game_of_thrones.df['author']==character.upper()]
+        
+        plt.figure()
+        plt.plot(char_df.char_cumsum.tolist())
+        plt.title('Sentiment Polarity across all {} chapters'.format(character.upper()))
+        plt.xlabel('Sentence Number')
+        plt.ylabel('Cumulative Sentiment Polarity')
+        return
+    
+    def plot_wholeBook(self):
+        '''Plot whole book'''
+        plt.figure()
+        plt.plot(self.df.book_cumsum.tolist())
+        plt.title('Sentiment Polarity across Game of Thrones')
+        plt.xlabel('Sentence Number')
+        plt.ylabel('Cumulative Sentiment Polarity')
+        return
 
     def start_post(self):
         '''Post the positive and negative sentences along with the description table to WordPress'''
@@ -336,10 +360,12 @@ if __name__ == '__main__':
         if user_input.upper() in game_of_thrones.pf['Character'].unique():
             print(user_input+' in Book')
             game_of_thrones.blobWholeBook()
-            character = game_of_thrones.df.groupby('author').get_group(user_input.upper())
+            game_of_thrones.plot_singleChar(user_input)
+            
         else:
             print("Blob-ing the whole book")
             game_of_thrones.blobWholeBook()
+            game_of_thrones.plot_wholeBook()
     
     '''NLTK analysis'''
 #    game_of_thrones.natural()
