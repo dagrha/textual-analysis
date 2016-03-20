@@ -161,6 +161,7 @@ class BookAnalysis:
 
         '''Group the dataframe by chapter, author; run a cumulative summation of the polarity over each group.'''
         self.df.reset_index(drop=True, inplace=True)
+        self.df['sent_index'] = self.df.index
         self.df['chap_cumsum'] = self.df.groupby(['chapter'])['polarity'].cumsum()
         self.df['char_cumsum'] = self.df.groupby(['author'])['polarity'].cumsum()
         self.df['book_cumsum'] = self.df['polarity'].cumsum()
@@ -226,6 +227,18 @@ class BookAnalysis:
                 print()
                 break
             self.set_chapter(user_input)
+
+    def event_locator(self, sub_df, event, text):
+        '''Takes the _text_ argument and returns the index of that
+        sentence in the given dataframe (_sub_df_ argument) that is 
+        closest to the index of the wholeBook dataframe. _sub_df_, 
+        for example, could just be the df of a single character, or 
+        it could be the entire book. Returns a tuple of the index 
+        and the event summary (_event_ argument)'''
+        text_filter = self.df.raw.str.contains(text)
+        sent_idx = int(self.df[text_filter].sent_index.values)
+        sub_sent_idx = int(sub_df.iloc[(sub_df.sent_index - sent_idx).abs().argsort()[:1]].index.values)
+        return (sub_sent_idx, event)
         
     def set_chapter(self,chap_num):
         self.chapter_code = 'c' + str(user_input).zfill(2)
