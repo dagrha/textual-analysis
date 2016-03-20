@@ -228,7 +228,7 @@ class BookAnalysis:
                 break
             self.set_chapter(user_input)
 
-    def event_locator(self, sub_df, event, text):
+    def event_locator(self, sub_df, text):
         '''Takes the _text_ argument and returns the index of that
         sentence in the given dataframe (_sub_df_ argument) that is 
         closest to the index of the wholeBook dataframe. _sub_df_, 
@@ -238,7 +238,7 @@ class BookAnalysis:
         text_filter = self.df.raw.str.contains(text)
         sent_idx = int(self.df[text_filter].sent_index.values)
         sub_sent_idx = int(sub_df.iloc[(sub_df.sent_index - sent_idx).abs().argsort()[:1]].index.values)
-        return (sub_sent_idx, event)
+        return sub_sent_idx
         
     def set_chapter(self,chap_num):
         self.chapter_code = 'c' + str(user_input).zfill(2)
@@ -350,8 +350,21 @@ class BookAnalysis:
         for item in chap_bound_list:
             plt.vlines(item[0],ylim[0],ylim[1],'k','dotted')
             plt.text(item[0]+5, ylim[1]*0.97, item[2], fontsize=14)
-            
-
+        return
+        
+    def add_annot(self, sub_df, event, text, text_height=0.9):
+        '''Adds a annotation of _event_ text at the given sentence containing _text_ 
+        '''
+        event_ix = self.event_locator(sub_df, text)
+        event_y=sub_df.loc[event_ix,'char_cumsum']
+        ylim = plt.ylim()
+        text_y=(ylim[1]-ylim[0])*text_height+ylim[0]
+        
+        print(text_y)
+        plt.annotate(event,(event_ix,event_y),(event_ix,text_y),
+                     arrowprops=dict(width=1,headwidth=3))
+        return
+    
     def start_post(self):
         '''Post the positive and negative sentences along with the description table to WordPress'''
         password = input('Password:')
